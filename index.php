@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="float-shape float1"></div>
     <div class="float-shape float2"></div>
     <div class="float-shape float3"></div>
-    <div class="form-card" id="draggableCard">
+    <div class="form-card">
         <div class="form-title">
             <span class="logo-anim">
                 <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#2196f3" opacity=".25"/><circle cx="24" cy="24" r="14" fill="#fff" opacity=".7"/><path d="M24 15a9 9 0 0 1 9 9v1a9 9 0 0 1-18 0v-1a9 9 0 0 1 9-9z" fill="#2196f3"/><circle cx="24" cy="21" r="4" fill="#90caf9"/></svg>
@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="success"><?= $success ?></div>
         <?php endif; ?>
         <?php if ($errors): ?>
-            <div class="error"><?= implode('<br>', $errors) ?></div>
+            <div class="error" role="alert"><?= implode('<br>', $errors) ?></div>
         <?php endif; ?>
         <form id="mainForm" method="post" novalidate>
             <div class="input-group">
@@ -86,14 +86,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <div class="inline-group">
                 <span style="margin-right:8px; color:#2196f3; font-size:1.1em;">Gender:</span>
-                <label><input type="radio" name="gender" value="Male" <?= $gender==='Male'?'checked':''; ?>> Male</label>
-                <label><input type="radio" name="gender" value="Female" <?= $gender==='Female'?'checked':''; ?>> Female</label>
+                <label for="gender-male"><input type="radio" id="gender-male" name="gender" value="Male" <?= $gender==='Male'?'checked':''; ?>> Male</label>
+                <label for="gender-female"><input type="radio" id="gender-female" name="gender" value="Female" <?= $gender==='Female'?'checked':''; ?>> Female</label>
             </div>
             <div class="inline-group">
                 <span style="margin-right:8px; color:#2196f3; font-size:1.1em;">Hobbies:</span>
-                <label><input type="checkbox" name="hobbies[]" value="Reading" <?= in_array('Reading',$hobbies)?'checked':''; ?>> Reading</label>
-                <label><input type="checkbox" name="hobbies[]" value="Music" <?= in_array('Music',$hobbies)?'checked':''; ?>> Music</label>
-                <label><input type="checkbox" name="hobbies[]" value="Sports" <?= in_array('Sports',$hobbies)?'checked':''; ?>> Sports</label>
+                <label for="hobby-reading"><input type="checkbox" id="hobby-reading" name="hobbies[]" value="Reading" <?= in_array('Reading',$hobbies)?'checked':''; ?>> Reading</label>
+                <label for="hobby-music"><input type="checkbox" id="hobby-music" name="hobbies[]" value="Music" <?= in_array('Music',$hobbies)?'checked':''; ?>> Music</label>
+                <label for="hobby-sports"><input type="checkbox" id="hobby-sports" name="hobbies[]" value="Sports" <?= in_array('Sports',$hobbies)?'checked':''; ?>> Sports</label>
             </div>
             <div class="input-group">
                 <label for="country">Country</label>
@@ -112,31 +112,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </div>
 </body>
-<script>
-// Make the card draggable
-const card = document.getElementById('draggableCard');
-let isDragging = false, offsetX = 0, offsetY = 0;
-card.addEventListener('mousedown', function(e) {
-    isDragging = true;
-    offsetX = e.clientX - card.getBoundingClientRect().left;
-    offsetY = e.clientY - card.getBoundingClientRect().top;
-    card.style.transition = 'none';
-    card.style.zIndex = 10;
-});
-document.addEventListener('mousemove', function(e) {
-    if (isDragging) {
-        card.style.position = 'fixed';
-        card.style.left = (e.clientX - offsetX) + 'px';
-        card.style.top = (e.clientY - offsetY) + 'px';
-    }
-});
-document.addEventListener('mouseup', function() {
-    if (isDragging) {
-        isDragging = false;
-        card.style.transition = '';
-        card.style.zIndex = 2;
-    }
-});
-</script>
+<!-- Removed draggable card JS for static form -->
 <script src="form_validate.js"></script>
 </html>
