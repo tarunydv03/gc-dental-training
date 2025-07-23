@@ -1,5 +1,6 @@
 
 
+/* === Page Base & Background === */
 body, html {
     margin: 0;
     padding: 0;
@@ -8,6 +9,7 @@ body, html {
     overflow-x: hidden;
     background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%, #fbc2eb 100%);
 }
+/* Main flex container for centering the card */
 .main-bg {
     min-height: 100vh;
     min-height: 100dvh;
@@ -18,7 +20,7 @@ body, html {
     z-index: 1;
     padding: 0 10px;
 }
-/* Glassmorphism floating shapes */
+/* Floating shapes for background decoration (glassmorphism effect) */
 .float-shape {
     position: absolute;
     border-radius: 50%;
@@ -35,6 +37,7 @@ body, html {
     50% { transform: translateY(-30px) scale(1.08); }
 }
 
+/* === Glassmorphism Card === */
 .form-card {
     background: rgba(255,255,255,0.55);
     backdrop-filter: blur(18px) saturate(1.2);
@@ -56,6 +59,7 @@ body, html {
     box-shadow: 0 2px 12px rgba(33, 150, 243, 0.10);
     transform: scale(0.98);
 }
+/* Title and animated logo above the form */
 .form-title {
     text-align: center;
     margin-bottom: 18px;
@@ -70,6 +74,7 @@ body, html {
     gap: 12px;
     flex-direction: column;
 }
+/* Animated logo/avatar above the form */
 .logo-anim {
     width: 70px;
     height: 70px;
@@ -91,6 +96,7 @@ body, html {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
 }
+/* Form label styling */
 label {
     font-weight: 500;
     display: block;
@@ -99,6 +105,7 @@ label {
     letter-spacing: 0.2px;
     transition: color 0.2s;
 }
+/* Input fields and select dropdowns (with icon padding) */
 input[type="text"], input[type="email"], select {
     width: 100%;
     padding: 12px 38px 12px 40px;
@@ -117,10 +124,12 @@ input:focus, select:focus {
     border-color: #2196f3;
     box-shadow: 0 2px 12px #90caf933;
 }
+/* Container for each input and its icon */
 .input-group {
     position: relative;
     margin-bottom: 18px;
 }
+/* Icon inside input box, left-aligned and vertically centered */
 .input-icon {
     position: absolute;
     left: 0;
@@ -149,6 +158,7 @@ input:focus, select:focus {
     border-color: #2196f3;
     box-shadow: 0 2px 8px #90caf933;
 }
+/* Inline group for radio/checkbox options */
 .inline-group {
     display: flex;
     flex-wrap: wrap;
@@ -163,6 +173,7 @@ input:focus, select:focus {
     font-weight: 400;
     color: #444;
 }
+/* === Submit Button (glowing, animated) === */
 button[type="submit"] {
     appearance: none;
     background: linear-gradient(90deg, #2196f3 50%, #b3e5fc 100%);
@@ -208,6 +219,7 @@ button[type="submit"]:hover::after {
     0% { left: -50%; }
     100% { left: 100%; }
 }
+/* Success and error message styling */
 .success, .error {
     margin-bottom: 12px;
     padding: 12px 18px;

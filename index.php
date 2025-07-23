@@ -1,4 +1,5 @@
 <?php
+// Basic PHP form handler with MariaDB save
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -13,15 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gender = $_POST['gender'] ?? '';
     $country = $_POST['country'] ?? '';
     $hobbies = $_POST['hobbies'] ?? [];
-
     if ($name === '') $errors[] = "Name is required.";
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email required.";
     if ($gender === '') $errors[] = "Select gender.";
     if (empty($hobbies)) $errors[] = "Select at least one hobby.";
     if ($country === '') $errors[] = "Select your country.";
-
     if (empty($errors)) {
-        // Save to MariaDB
         $conn = new mysqli('db', 'db', 'db', 'db');
         if ($conn->connect_errno) {
             $errors[] = "DB error: " . $conn->connect_error;
@@ -112,7 +110,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </div>
 </body>
 <script>
-// Draggable card
+// Draggable card logic
 const card = document.getElementById('draggableCard');
 let isDragging = false, offsetX = 0, offsetY = 0;
 card.addEventListener('mousedown', function(e) {
