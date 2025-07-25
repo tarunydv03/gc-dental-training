@@ -1,117 +1,215 @@
+
 <?php
-// Minimal PHP form handler with MariaDB save
-ini_set('display_errors', 1);
-error_reporting(E_ALL);
+session_start();
+require 'db.php'; // This line requires db.php to be present
+
+// Session and cookie test
+$_SESSION['test'] = 'Session is working!';
+setcookie('testcookie', 'Cookie works', time()+3600, '/');
+
+$session_test = $_SESSION['test'] ?? 'Session not set';
+$cookie_test = $_COOKIE['testcookie'] ?? 'Cookie not set yet (refresh page)';
 
 $errors = [];
 $success = "";
 $name = $email = $gender = $country = "";
 $hobbies = [];
 
-// Handle form POST
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'create') {
     $name = trim($_POST['name'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $gender = $_POST['gender'] ?? '';
     $country = $_POST['country'] ?? '';
     $hobbies = $_POST['hobbies'] ?? [];
-    // Validate fields
-    if ($name === '') $errors[] = "Name is required.";
+    if ($name === '') $errors[] = "Name required.";
     if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = "Valid email required.";
     if ($gender === '') $errors[] = "Select gender.";
     if (empty($hobbies)) $errors[] = "Select at least one hobby.";
-    if ($country === '') $errors[] = "Select your country.";
-    // Save to DB if valid
+    if ($country === '') $errors[] = "Select country.";
     if (empty($errors)) {
-        $conn = new mysqli('db', 'db', 'db', 'db');
-        if ($conn->connect_errno) {
-            $errors[] = "DB error: " . $conn->connect_error;
-        } else {
-            $hobbies_str = implode(',', $hobbies);
-            $stmt = $conn->prepare("INSERT INTO users (name,email,gender,hobbies,country) VALUES (?,?,?,?,?)");
-            $stmt->bind_param('sssss', $name, $email, $gender, $hobbies_str, $country);
-            if ($stmt->execute()) {
-                $success = "Saved! Name: " . htmlspecialchars($name) . ", Email: " . htmlspecialchars($email);
-                $name = $email = $gender = $country = "";
-                $hobbies = [];
-            } else {
-                $errors[] = "Insert error: " . $stmt->error;
-            }
-            $stmt->close();
-            $conn->close();
-        }
+        $h_str = implode(',', $hobbies);
+        $stmt = $pdo->prepare("INSERT INTO users (name, email, gender, hobbies, country) VALUES (?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $email, $gender, $h_str, $country]);
+        $_SESSION['flash'] = "Record created successfully.";
+        header("Location: index.php");
+        exit;
     }
 }
+
+$users = $pdo->query("SELECT * FROM users ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>Registration Form</title>
+    <meta charset="UTF-8">
+    <title>User Management</title>
     <link rel="stylesheet" href="style.css">
     <script src="form-validate.js"></script>
+    <style>
+        .navbar {
+            width: 100%;
+            background: #fff;
+            box-shadow: 0 2px 12px #b3e5fc33;
+            padding: 0 0 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 60px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 10;
+        }
+        .navbar .nav-title {
+            font-size: 1.4em;
+            color: #2196f3;
+            font-weight: bold;
+            letter-spacing: 1px;
+            margin-left: 32px;
+        }
+        .navbar .nav-links {
+            display: flex;
+            gap: 18px;
+            margin-right: 32px;
+        }
+        .navbar .nav-links a {
+            text-decoration: none;
+            color: #2196f3;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 8px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .navbar .nav-links a.active, .navbar .nav-links a:hover {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+        .container {
+            margin-top: 90px;
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .form-card {
+            min-width: 340px;
+            max-width: 400px;
+            margin: 0;
+        }
+        .crud-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+            background: rgba(255,255,255,0.85);
+            border-radius: 18px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px #b3e5fc22;
+        }
+        .crud-table th, .crud-table td {
+            padding: 12px 18px;
+            text-align: left;
+        }
+        .crud-table th {
+            background: #e3f2fd;
+            color: #2196f3;
+            font-weight: 600;
+        }
+        .crud-table tr:not(:last-child) {
+            border-bottom: 1px solid #b3e5fc55;
+        }
+        .crud-table tr:hover {
+            background: #f5fafd;
+        }
+        .action-btn {
+            display: inline-block;
+            padding: 6px 14px;
+            margin: 0 2px;
+            border-radius: 7px;
+            background: #2196f3;
+            color: #fff;
+            text-decoration: none;
+            font-size: 0.98em;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px #b3e5fc33;
+        }
+        .action-btn.edit { background: #43a047; }
+        .action-btn.delete { background: #e53935; }
+        .action-btn:hover { filter: brightness(1.08); box-shadow: 0 2px 8px #b3e5fc55; }
+        @media (max-width: 900px) {
+            .container { flex-direction: column; align-items: center; gap: 32px; }
+        }
+    </style>
 </head>
 <body>
-<div class="main-bg">
-    <div class="float-shape float1"></div>
-    <div class="float-shape float2"></div>
-    <div class="float-shape float3"></div>
-    <div class="form-card">
-        <div class="form-title">
-            <span class="logo-anim">
-                <svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="20" fill="#2196f3" opacity=".25"/><circle cx="24" cy="24" r="14" fill="#fff" opacity=".7"/><path d="M24 15a9 9 0 0 1 9 9v1a9 9 0 0 1-18 0v-1a9 9 0 0 1 9-9z" fill="#2196f3"/><circle cx="24" cy="21" r="4" fill="#90caf9"/></svg>
-            </span>
-            <span>Registration Form</span>
+<div style="position:fixed;top:65px;right:24px;z-index:9999;background:#fff8;padding:10px 18px;border-radius:10px;box-shadow:0 2px 8px #b3e5fc33;font-size:0.98em;">
+    <b>Session:</b> <?= htmlspecialchars($session_test) ?><br>
+    <b>Cookie:</b> <?= htmlspecialchars($cookie_test) ?>
+</div>
+<div class="navbar">
+    <div class="nav-title">User Management</div>
+    <div class="nav-links">
+        <a href="#form" class="active">Add User</a>
+        <a href="#list">User List</a>
+    </div>
+</div>
+<div class="main-bg" style="min-height:100vh;">
+    <div class="container">
+        <div class="form-card" id="form">
+            <h1 class="form-title" style="font-size:1.5em;">Add User</h1>
+            <?php if (!empty($_SESSION['flash'])): ?>
+                <div class="success"><?= htmlspecialchars($_SESSION['flash']) ?></div>
+                <?php unset($_SESSION['flash']); ?>
+            <?php endif ?>
+            <?php if ($errors): ?>
+                <div class="error"><?= implode('<br>', array_map('htmlspecialchars', $errors)) ?></div>
+            <?php endif; ?>
+            <form id="mainForm" method="post" novalidate style="margin-bottom:0;">
+                <input type="hidden" name="action" value="create">
+                <label>Name<input type="text" name="name" value="<?= htmlspecialchars($name) ?>" required></label>
+                <label>Email<input type="email" name="email" value="<?= htmlspecialchars($email) ?>" required></label>
+                <div class="inline-group">Gender:
+                    <label><input type="radio" name="gender" value="Male" <?= $gender === 'Male' ? 'checked' : ''; ?>> Male</label>
+                    <label><input type="radio" name="gender" value="Female" <?= $gender === 'Female' ? 'checked' : ''; ?>> Female</label>
+                </div>
+                <div class="inline-group">Hobbies:
+                    <label><input type="checkbox" name="hobbies[]" value="Reading" <?= in_array('Reading', $hobbies) ? 'checked' : ''; ?>> Reading</label>
+                    <label><input type="checkbox" name="hobbies[]" value="Music" <?= in_array('Music', $hobbies) ? 'checked' : ''; ?>> Music</label>
+                    <label><input type="checkbox" name="hobbies[]" value="Sports" <?= in_array('Sports', $hobbies) ? 'checked' : ''; ?>> Sports</label>
+                </div>
+                <label>Country
+                    <select name="country" required>
+                        <option value="">Select</option>
+                        <option value="India" <?= $country === 'India' ? 'selected' : ''; ?>>India</option>
+                        <option value="USA" <?= $country === 'USA' ? 'selected' : ''; ?>>USA</option>
+                        <option value="Other" <?= $country === 'Other' ? 'selected' : ''; ?>>Other</option>
+                    </select>
+                </label>
+                <button type="submit">Add User</button>
+            </form>
         </div>
-        <?php if ($success): ?>
-            <div class="success"><?= $success ?></div>
-        <?php endif; ?>
-        <?php if ($errors): ?>
-            <div class="error" role="alert"><?= implode('<br>', $errors) ?></div>
-        <?php endif; ?>
-        <form id="mainForm" method="post" novalidate>
-            <div class="input-group">
-                <label for="name">Name</label>
-                <span class="input-icon">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" stroke="#90caf9" stroke-width="2"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" stroke="#90caf9" stroke-width="2"/></svg>
-                </span>
-                <input type="text" id="name" name="name" value="<?= htmlspecialchars($name) ?>" required autocomplete="off">
-            </div>
-            <div class="input-group">
-                <label for="email">Email</label>
-                <span class="input-icon">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" stroke="#90caf9" stroke-width="2"/><path d="M3 7l9 6 9-6" stroke="#90caf9" stroke-width="2"/></svg>
-                </span>
-                <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required autocomplete="off">
-            </div>
-            <div class="inline-group">
-                <span style="margin-right:8px; color:#2196f3; font-size:1.1em;">Gender:</span>
-                <label for="gender-male"><input type="radio" id="gender-male" name="gender" value="Male" <?= $gender==='Male'?'checked':''; ?>> Male</label>
-                <label for="gender-female"><input type="radio" id="gender-female" name="gender" value="Female" <?= $gender==='Female'?'checked':''; ?>> Female</label>
-            </div>
-            <div class="inline-group">
-                <span style="margin-right:8px; color:#2196f3; font-size:1.1em;">Hobbies:</span>
-                <label for="hobby-reading"><input type="checkbox" id="hobby-reading" name="hobbies[]" value="Reading" <?= in_array('Reading',$hobbies)?'checked':''; ?>> Reading</label>
-                <label for="hobby-music"><input type="checkbox" id="hobby-music" name="hobbies[]" value="Music" <?= in_array('Music',$hobbies)?'checked':''; ?>> Music</label>
-                <label for="hobby-sports"><input type="checkbox" id="hobby-sports" name="hobbies[]" value="Sports" <?= in_array('Sports',$hobbies)?'checked':''; ?>> Sports</label>
-            </div>
-            <div class="input-group">
-                <label for="country">Country</label>
-                <span class="input-icon">
-                    <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="10" rx="3" stroke="#90caf9" stroke-width="2"/><path d="M3 9l9 4 9-4" stroke="#90caf9" stroke-width="2"/></svg>
-                </span>
-                <select id="country" name="country" required>
-                    <option value="">Select</option>
-                    <option value="India" <?= $country==='India'?'selected':''; ?>>India</option>
-                    <option value="USA" <?= $country==='USA'?'selected':''; ?>>USA</option>
-                    <option value="Other" <?= $country==='Other'?'selected':''; ?>>Other</option>
-                </select>
-            </div>
-            <button type="submit">Submit</button>
-        </form>
+        <div style="flex:1;max-width:700px;" id="list">
+            <h2 class="form-title" style="font-size:1.3em;margin-bottom:18px;">User List</h2>
+            <table class="crud-table">
+                <tr>
+                    <th>Name</th><th>Email</th><th>Gender</th><th>Hobbies</th><th>Country</th><th>Action</th>
+                </tr>
+                <?php foreach ($users as $u): ?>
+                <tr>
+                    <td><?= htmlspecialchars($u['name']) ?></td>
+                    <td><?= htmlspecialchars($u['email']) ?></td>
+                    <td><?= htmlspecialchars($u['gender']) ?></td>
+                    <td><?= htmlspecialchars($u['hobbies']) ?></td>
+                    <td><?= htmlspecialchars($u['country']) ?></td>
+                    <td>
+                        <a href="edit.php?id=<?= $u['id'] ?>" class="action-btn edit">Edit</a>
+                        <a href="delete.php?id=<?= $u['id'] ?>" class="action-btn delete" onclick="return confirm('Delete this user?')">Delete</a>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+            </table>
+        </div>
     </div>
 </div>
 </body>
-<!-- Removed draggable card JS for static form -->
-<script src="form_validate.js"></script>
 </html>
